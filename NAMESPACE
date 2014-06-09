@@ -1,0 +1,47 @@
+importFrom("graphics", plot)
+importFrom("hash", "copy")
+
+export("itch.to.kane")
+export("itch.to.orderbook")
+export("orderbook" )
+
+exportClasses("orderbook")
+
+exportMethods(
+              "show",
+	      "summary",
+	      "plot",
+              "display",
+              "[",
+              "copy",
+
+              "best.bid",
+              "best.ask",
+
+   	      "bid.price.levels",
+	      "ask.price.levels",
+	      "total.price.levels",
+
+	      "bid.orders",
+	      "ask.orders",
+	      "total.orders",
+
+	      "mid.point",
+	      "inside.market",
+
+	      "spread",
+
+              "add.order",
+              "remove.order",
+              "replace.order",
+              "market.order",
+
+              "read.orders",
+              "read.time",
+              "reset",
+
+              "view.trade",
+              "next.trade",
+              "previous.trade",
+              "midpoint.return"
+              )
