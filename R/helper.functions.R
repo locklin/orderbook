@@ -56,11 +56,7 @@ txsub <- function(x,y) {
 .update <- function(ob)
 {
     x <- copy(ob@ob.data)
-    ## If trader, then the skip is different than if not
-    if(isTRUE(ob@trader))
-        skip = 6
-    else
-        skip = 5
+    skip = 5
     ## Turn hash into a list. Unlist into a vector. Remove
     ## names. Vector is currently id,time,type,size,price repeated
     ## over and over
@@ -73,21 +69,11 @@ txsub <- function(x,y) {
     type <- as.factor(x[seq(5, len, skip)])
     time <- as.numeric(x[seq(1, len, skip)])
     id <- as.character(x[seq(2, len, skip)])
-    ## If trader then keep track of status
 
-    if(isTRUE(ob@trader)){
-        status <- factor(x[seq(6, len, skip)], levels = c("TRUE",
-                                               "FALSE"))
-        ## Create data frame and name it. Put it into the current.ob
-        ## slot. Return the order book.
-        x <- data.frame(price, size, type, time, id, status,
-                        stringsAsFactors = FALSE)
-        names(x) <- c("price", "size", "type", "time", "id", "status")
-    } else{
-        x <- data.frame(price, size, type, time, id,
-                        stringsAsFactors = FALSE)
-        names(x) <- c("price", "size", "type", "time", "id")
-    }
+    x <- data.frame(price, size, type, time, id,
+                    stringsAsFactors = FALSE)
+    names(x) <- c("price", "size", "type", "time", "id")
+
     ob@current.ob <- x
     invisible(ob)
 }
@@ -116,7 +102,7 @@ txsub <- function(x,y) {
 }
 
 ## Returns the time of a row number
-
+## this doesn't seem to be called anywhere -SCL
 .get.row.time <- function(file, n){
     ## Open the file connection
     file <- file(file, open="r")
@@ -132,7 +118,7 @@ txsub <- function(x,y) {
 ## Returns the row number of the next trade after the current
 ## time. Pretty much the same as the above function, except we look
 ## for "T".
-
+## this will need some kind of fixing -gets called in next.trade method -SCL
 .get.next.trade <- function(file, n){
     file <- file(file, open="r")
     x <- scan(file, nlines = 1, sep = ",", what = "character",
@@ -149,8 +135,11 @@ txsub <- function(x,y) {
 
 
 
-## keeping this around to parse the old file format, and match up
-## with the new one
+
+## Takes in object and number of lines of the data file to be
+## read. Returns an object with updated ob.data, current.ob,
+## trade.data, my.trades, file.index, and current.time.
+## keeping around for history sake.
 .read.orders <- function(object, n){
     ob <- copy(object)
     ## Pull out current values
@@ -158,82 +147,7 @@ txsub <- function(x,y) {
     file.index <- ob@file.index
     ob.data <- ob@ob.data
     trade.data <- ob@trade.data
-    ## If trader == TRUE, then also include if order belongs to user
-    if(isTRUE(object@trader)) {
-      max = 7
-    }else{
-      max = 6
-    }
-
-    ## Open file connection. Skip to the current place in the file and
-    ## read in the first line after that.
-    file <- file(file, open = "r")
-    x <- scan(file, nlines = 1, sep = ",", what = "character", quiet =
-              TRUE, skip = file.index)
-
-    ## While there are still lines to read and less than n lines have
-    ## been read.
-    i <- 0
-    while(!identical(length(x), 0) & i < n){
-        ## If there is an add change current position, add something
-        ## into ID, and increment current position.
-        if (isTRUE(x[1] %in% "A")){
-            ob.data[x[3]] <- x[2:max]
-        }
-
-        ## For a cancel remove the row from ob.data, remove the ID
-        ## from list.
-        if (isTRUE(x[1] %in% "C")){
-            ob.data[x[3]] <- NULL
-        }
-
-        ## For a replace find the right row and replace it with the
-        ## new size.
-        if (isTRUE(x[1] %in% "R")){
-            ob.data[[x[3]]][4] <- x[4]
-        }
-
-        ## For a trade increment the trade index and store the trade
-        ## data.
-        if (isTRUE(x[1] %in% "T")){
-            trade.data <- append(trade.data, file.index + i + 1)
-            trade.data <- append(trade.data, x[2:(max - 1)])
-        }
-
-        ## Increase i
-        i <- i + 1
-        ## Read in the next line.
-        x <- scan(file, nlines = 1, sep = ",", what = "character",
-                  quiet = TRUE)
-    }
-    close(file)
-    ob@ob.data <- ob.data
-    ob@file.index <- file.index + i
-    ob@trade.data <- trade.data
-    ob@current.time <- as.numeric(x[2])
-    ## Run update to create a new current.ob from the new ob.data.
-    ob = .update(ob)
-    invisible(ob)
-}
-
-
-## Takes in object and number of lines of the data file to be
-## read. Returns an object with updated ob.data, current.ob,
-## trade.data, my.trades, file.index, and current.time.
-
-.read.orders.tp <- function(object, n){
-    ob <- copy(object)
-    ## Pull out current values
-    file <- ob@file
-    file.index <- ob@file.index
-    ob.data <- ob@ob.data
-    trade.data <- ob@trade.data
-    ## If trader == TRUE, then also include if order belongs to user
-    if(isTRUE(object@trader)) {
-      max = 7
-    } else {
-      max = 6
-    }
+    max = 6
     ## Open file connection. Skip to the current place in the file and
     ## read in the first line after that.
     file <- file(file, open = "r")
@@ -322,6 +236,10 @@ txsub <- function(x,y) {
     invisible(ob)
 }
 
+
+
+
+
 ## Converts x to a time. x should be milliseconds since midnight
 ## UTC. Returns as "H:M:S".
 
@@ -345,8 +263,6 @@ txsub <- function(x,y) {
 ## selected message row number for a vector of time in seconds,
 ## e.g. c(5, 10, 60, 120) means find the midpoint return for 5s, 10s,
 ## 1 min, 2 min after the trade.
-## -SCL Might need another method here for read.orders part
-## though in principle probably odn' tneed this
 
 .midpoint.returns <- function(object, trdprice, trdrow, time){
     ## Now the orderbook is at the start order
@@ -363,42 +279,114 @@ txsub <- function(x,y) {
         tmp.ob <- read.orders(tmp.ob, rows[i] - tmp.ob@file.index)
         midpoints[i] <- mid.point(tmp.ob)
     }
-    if(mid > trdprice)
-       return(midpoints - trdprice)
-    else
-        return(trdprice - midpoints)
+    if(mid > trdprice) {
+      return(midpoints - trdprice)
+    } else {
+      return(trdprice - midpoints)
+    }
 }
 
 
 
-## A, R, T, and C mean Add, Replace, Trade, and Cancel in orig Kane OB
-## "B" -- Add buy order
-## "S" -- Add sell order
-## "E" -- Execute outstanding order in part
-## "C" -- Cancel outstanding order in part
-## "F" -- Execute outstanding order in full
-## "D" -- Delete outstanding order in full
-## "X" -- Bulk volume for the cross event
-## "T" -- Execute non-displayed order
-itch.to.kane<-function(x) {
-  paste(x$Time, x$Order, sep=",") -> to
-  paste(to, x$Price, x$Shares,sep=",")-> frag
-  switch(x$T,
-         B = paste("A",frag,"BID",sep=","),  ## add to bid
-         S = paste("A",frag,"ASK",sep=","), ## add to ask
-         C = paste("P",to,x$Shares,sep=","),      ## cancel in part, no price
-         F = paste("F",to,sep=","),      ## execute outstanding in  full
-         E = paste("E",to,x$Shares,sep=","), ## no price, part exec
-         D = paste("C",to,sep=","),      ## cancel in full
-         T = paste("T",frag,sep=","),    ## dark crossing trades
-         X = paste("T",to,sep=",")   ) -> out  ## might be a problem; it's rare anyway
-  out
+kane.tl <- function(x) {
+  ## translates the TP format to the old x[2:6] values to preserve order
+  ## TP: Time,Ticker,Order,T,Shares,Price,MPID,X
+  ## old: type,time,id,price,size,type 
+  c(x[1],x[3],x[6],x[5],switch(x[4], B="BID",S="ASK"))
 }
 
-## this is retarded, but I'll do something better later
-itch.to.orderbook<-function(xx,filen="~/tmp.ob") {
-  cat('type,time,id,price,size,type\n',file=filen,append=F)
-  for(i in 1:nrow(xx)) {
-    cat(paste(tp.to.kane(xx[i]),"\n",sep=""),file=filen,append=T)
-  }
+## Takes in object and number of lines of the data file to be
+## read. Returns an object with updated ob.data, current.ob,
+## trade.data, my.trades, file.index, and current.time.
+.read.orders.tp <- function(object, n){
+    ob <- copy(object)
+    ## Pull out current values
+    file <- ob@file
+    file.index <- ob@file.index
+    ob.data <- ob@ob.data
+    trade.data <- ob@trade.data
+    ## Open file connection. Skip to the current place in the file and
+    ## read in the first line after that.
+    file <- file(file, open = "r")
+    x <- scan(file, nlines = 1, sep = ",", what = "character", quiet =
+              TRUE, skip = file.index)
+    ## While there are still lines to read and less than n lines have
+    ## been read.
+    i <- 0
+
+    while(!identical(length(x), 0) & i < n){
+        ## If there is an add change current position, add something
+        ## into ID, and increment current position.
+        if (isTRUE(x[4] %in% c("B","S"))){
+            ob.data[x[3]] <- kane.tl(x)
+        }
+
+        ## For a cancel remove the row from ob.data, remove the ID
+        ## from list.
+        if (isTRUE(x[4] %in% "D")){
+            ob.data[x[3]] <- NULL
+        }
+
+        ## partial cancel, subtract the position
+        if (isTRUE(x[4] %in% "C")){
+          ttmp <- txsub(ob.data[[x[3]]][4], x[5])
+          if(ttmp<=0) {
+            ob.data[x[3]] <- NULL
+            warning(paste("should this have been a full cancel",x[3],x[4]))
+          } else {
+            ob.data[[x[3]]][4] <- ttmp
+          }
+        }
+        
+        ##  partial cross, subtract the position & append the trade
+        ## 
+        if (isTRUE(x[4] %in% "E")){
+          ttmp <- txsub(ob.data[[x[3]]][4], x[5])
+          if(ttmp<=0) {
+            ob.data[x[3]] <- NULL
+            warning(paste("should this have been a full cross",x[3],x[4],
+                          "omit!"))
+          } else {
+            ob.data[[x[3]]][4] <- ttmp
+            xo <- ob.data[[x[3]]]
+            ## got to get the trade price and size from the hash, not here
+            trade.data <-  rbind(trade.data,c((file.index+1+i),x[1],xo[3],xo[4],1))
+          }
+        }
+        
+        ## full cross
+        ## 
+        if (isTRUE(x[4] %in% "F")) {
+          ## got to get the trade price from the hash, not here
+          xo <- ob.data[[x[3]]]
+          ob.data[x[3]] <- NULL
+          trade.data <-  rbind(trade.data,c((file.index+1+i),x[1],xo[3],xo[4],2))
+        }
+        
+        ## For a replace find the right row and replace it with the
+        ## new size.
+        if (isTRUE(x[4] %in% "R")){
+            ob.data[[x[3]]][4] <- x[5]
+        }
+        ## For a trade increment the trade index and store the trade
+        ## data. Skip "X" case, since it doesn't print size and the OrderID
+        ## doesn't correspond to anything
+        if (isTRUE(x[4] %in% "T")){
+          trade.data <-  rbind(trade.data,c((file.index+1+i),x[1],x[6],x[5],0))
+        }
+        ## Increase i
+        i <- i + 1
+        ## Read in the next line.
+        x <- scan(file, nlines = 1, sep = ",", what = "character",
+                  quiet = TRUE)
+    } ## end while
+    
+    close(file)
+    ob@ob.data <- ob.data
+    ob@file.index <- file.index + i
+    ob@trade.data <- trade.data
+    ob@current.time <- as.numeric(x[1])
+    ## Run update to create a new current.ob from the new ob.data.
+    ob = .update(ob)
+    invisible(ob)
 }

@@ -16,12 +16,9 @@ Since ITCH style files includes things like partial cancels and crosses, I added
 This is to make sense of the CSV data provided by tradingphysics.com (TP), 
 which I believe is extremely close to native ITCH 4.0 format.
 
-I also included a function for converting TP formatted data into this format, but it
-is a slow function. Feel free to make it less retarded. I'll probably recode it in J.
 
+TODO: really simple order book: same thing without order-id/time priority
 TODO: need a test case to do the regression to past results
 TODO: need a test data set using the new fields (check with Art if that's OK)
-TODO: output a timeseries or data.table for the trade data, since the present 
-output is mildly retarded
 TODO: fix the 2 warnings and 3 notes in R CMD check 
 

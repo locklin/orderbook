@@ -391,20 +391,12 @@
         ans$right$labels$at <- yask.at
         ans$right$labels$labels <- formatC(price[yask.at], format =
                                            "f", digits = 2)
-
         ans
     }
 
-    if(isTRUE(object@trader)){
-        groups <- interaction(x$status, x$time)
-        colors <- c("black", "gray")
-    }else{
-        groups <- x$time
-        colors <- "gray"
-    }
-
+    groups <- x$time
+    colors <- "gray"
     ## Actually plotting it
-
     tmp <- barchart(price ~ size | type, data = x,
 
                     ylab = "Price", xlab = "Size (Shares)",

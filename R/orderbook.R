@@ -22,8 +22,8 @@ setClass("orderbook", representation(current.ob   = "data.frame",
                                      file         = "character",
                                      file.index   = "numeric",
                                      ob.data      = "hash",
-                                     trade.data   = "vector",
-                                     trader       = "logical"
+                                     trade.data   = "data.frame",
+                                     type       = "character"
                                      ),
 
          prototype(current.ob   = data.frame(),
@@ -31,8 +31,8 @@ setClass("orderbook", representation(current.ob   = "data.frame",
                    file		= character(),
                    file.index   = 1,
                    ob.data      = hash(),
-                   trade.data   = vector(),
-                   trader       = FALSE
+                   trade.data   = data.frame(),
+                   type       = character()
                    )
          )
 
@@ -42,16 +42,19 @@ setClass("orderbook", representation(current.ob   = "data.frame",
 setMethod("read.orders",
           signature(object = "orderbook"),
           function(object, n = 1000){
-              if(identical(n, 0))
-                  invisible(object)
-              else if(n > 0){
-                  invisible(.read.orders.tp(object, n))
-              } else {
-                  n <- object@file.index + n - 1
-                  object <- reset(object)
-                  invisible(.read.orders.tp(object, n))
-              }
+            switch(object@type,
+                   standard = .read.orders,
+                   tradingphysics = .read.orders.tp) -> rfun
+            if(identical(n, 0))
+              invisible(object)
+            else if(n > 0){
+              invisible(rfun(object, n))
+            } else {
+              n <- object@file.index + n - 1
+              object <- reset(object)
+              invisible(rfun(object, n))
             }
+          }
           )
 
 
@@ -132,11 +135,7 @@ setMethod("best.ask",
 setMethod("show",
           signature(object = "orderbook"),
           function(object){
-            if(isTRUE(object@trader)) {
-              cat("An object of class orderbook (trader)\n")
-            } else {
-              cat("An object of class orderbook (default)\n")
-            }
+              cat(paste("An object of class orderbook", object@type,"\n"))
               cat("--------------------------\n")
               cat("Current orderbook time:   ",
                   .to.time(object@current.time), "\n")
@@ -282,15 +281,12 @@ setMethod("next.trade",
 setMethod("previous.trade",
           signature(object = "orderbook"),
           function(object){
-              if(isTRUE(object@trader))
-                  skip <- 5
-              else
-                  skip <- 4
-              x <- object@trade.data
-              trdrow = as.integer(x[length(x) - skip])
-              if(trdrow >= object@file.index)
-                  trdrow = as.integer(x[length(x) - skip * 2 - 1])
-              invisible(read.orders(object, trdrow - object@file.index))
+            skip <- 4
+            x <- object@trade.data
+            trdrow = as.integer(x[length(x) - skip])
+            if(trdrow >= object@file.index)
+              trdrow = as.integer(x[length(x) - skip * 2 - 1])
+            invisible(read.orders(object, trdrow - object@file.index))
           }
           )
 
@@ -471,11 +467,7 @@ setMethod("midpoint.return",
           signature(object = "orderbook"),
           function(object, tradenum, time){
               trade.data <- object@trade.data
-              if(isTRUE(object@trader)){
-                skip <- 6
-              }else{
-                skip <- 5
-              }
+              skip <- 5
               trdprice <- as.numeric(trade.data[4 + (tradenum - 1) * skip])
               trdrow <- as.numeric(trade.data[1 + (tradenum - 1) * skip])
               midpoint.return <- .midpoint.returns(object, trdprice,
@@ -516,18 +508,9 @@ setMethod("add.order",
               } else if(is.null(id)){
                   id <- 1
               }
-
               ## Create the new order as a data frame and name it.
-
-              if(isTRUE(object@trader)){
-                  new.order <- data.frame(price, size, type, new.time, id, status)
-                  names(new.order) <- c("price", "size", "type", "time",
-                                        "id", "status")
-              } else{
-                  new.order <- data.frame(price, size, type, new.time, id)
-                  names(new.order) <- c("price", "size", "type", "time",
-                                        "id")
-              }
+              new.order <- data.frame(price, size, type, new.time, id)
+              names(new.order) <- c("price", "size", "type", "time","id")
               ## Rbind it to current.ob.
               x <- do.call(rbind, list(x, new.order))
               ## Store it into object and return the object.
@@ -639,13 +622,8 @@ setMethod("view.trade",
           signature(object = "orderbook"),
           function(object, tradenum){
               x <- object@trade.data
-              if(isTRUE(object@trader)){
-                  skip <- 6
-                  names <- c("row", "time", "id", "price", "size", "status")
-              }else{
-                  skip <- 5
-                  names <- c("row", "time", "id", "price", "size")
-              }
+              skip <- 5
+              names <- c("row", "time", "id", "price", "size")
               start <- (tradenum - 1) * skip + 1
               end <- start + skip - 1
               trade <- x[start:end]

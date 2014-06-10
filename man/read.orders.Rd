@@ -25,7 +25,8 @@ read.orders(object, n = 1000)
     \item{P: }{Partial cancel: P,time,id,size}
     \item{E: }{Execute, partial: E,time,id,size}
     \item{F: }{execute, Full: F,time,id}
-    }
+  }
+  It also reads the ITCH 4.0 formatted CSV files provided by TradingPhysics.
 }
 \value{
   Return an object of class \code{orderbook}

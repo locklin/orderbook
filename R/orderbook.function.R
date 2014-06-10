@@ -23,47 +23,43 @@
 
 orderbook <- function(file  = NULL)
 {
-
         ## Create an empty current order book data frame
-
         current.ob <- data.frame(price = numeric(0), size =
                                  numeric(0), type = character(0), time
                                  = numeric(0), id = character(0))
-
         ## Check to see that the file is valid and can be opened
-
         obfile <- file(file, open = "r")
-
         stopifnot(isOpen(obfile, "r"))
-
-
         ## Read header file
-
-         x <- scan(file, nlines = 1, sep = ",", what = "character",
-              quiet = TRUE)
+        x <- scan(file, nlines = 1, sep = ",", what = "character", quiet = TRUE)
 
         ## Close file
 
         close(obfile)
 
-        stopifnot(identical(x[1], "type"), identical(x[2], "time"),
-                  identical(x[3], "id"), identical(x[4], "price"),
-                  identical(x[5], "size"), identical(x[6], "type"))
+        if(x[1]=="type") {
+          ## old format; keeping around for historical reasons
+          stopifnot(identical(x[1], "type"), identical(x[2], "time"),
+                    identical(x[3], "id"), identical(x[4], "price"),
+                    identical(x[5], "size"), identical(x[6], "type"))
+          mytype="standard"
+        }
 
-        ## See if its a trader file or not
+        if(x[1]=="Time") {
+          stopifnot(identical(x[1], "Time"), identical(x[2], "Ticker"),
+                    identical(x[3], "Order"), identical(x[4], "T"),
+                    identical(x[5], "Shares"), identical(x[6], "Price"))
+          mytype="tradingphysics"
+        }
 
-        if(identical(x[7], "status"))
-            trader = TRUE
-        else
-            trader = FALSE
-
-
+        td.data <- data.frame(row=0,time=0,price=0,size=0,kind=0)
+       
         ## Return a new order book object.
-
         invisible(new("orderbook",
                       current.ob   = current.ob,
                       file         = file,
-                      trader       = trader
+                      trade.data = td.data,
+                      type       = mytype
                       ))
 }
 

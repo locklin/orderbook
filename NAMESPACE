@@ -1,8 +1,6 @@
 importFrom("graphics", plot)
 importFrom("hash", "copy")
 
-export("itch.to.kane")
-export("itch.to.orderbook")
 export("orderbook" )
 
 exportClasses("orderbook")

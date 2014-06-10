@@ -63,8 +63,9 @@ an orderbook}
       currently in the orderbook. Essentially the same as current.ob,
       but a different data structure.
     }
-    \item{\code{trade.data}:}{A \code{vector} that contains data on all
-      trades that occurred before current.time.
+    \item{\code{trade.data}:}{A \code{data.frame} that contains data on all
+      trades that occurred before current.time. row, time, price, size,
+      kind, where kind=0 for dark trade, 1 for partial fill, 2 for full fill.
     }
     \item{\code{trader}:}{A \code{logical} indicating whether the order
       book should expect data with user orders and trades marked.

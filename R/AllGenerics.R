@@ -27,7 +27,7 @@ setClass("orderbook", representation(current.ob   = "data.frame",
                                      feed.index   = "numeric",
                                      ob.data      = "hash",
                                      trade.data   = "vector",
-                                     trader       = "logical"
+                                     type       = "character"
                                      ))
 
 if(!isGeneric("spread"))
