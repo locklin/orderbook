@@ -23,6 +23,8 @@ setClass("orderbook", representation(current.ob   = "data.frame",
                                      file.index   = "numeric",
                                      ob.data      = "hash",
                                      trade.data   = "data.frame",
+                                     ticker = "character",
+                                     exchange = "character",
                                      type       = "character"
                                      ),
 
@@ -32,6 +34,8 @@ setClass("orderbook", representation(current.ob   = "data.frame",
                    file.index   = 1,
                    ob.data      = hash(),
                    trade.data   = data.frame(),
+                   ticker = character(),
+                   exchange = character(),
                    type       = character()
                    )
          )
@@ -62,18 +66,18 @@ setMethod("read.orders",
 ## Reads orders from the file until the time specified.
 setMethod("read.time",
            signature(object = "orderbook"),
-           function(object, n){
+           function(object, hms){
                ## If the time you are reading is greater than current
                ## time there is no reason to start from the beginning.
                ## This takes care of that.
-               if(.to.ms(n) > object@current.time){
+               if(.to.ms(hms) > object@current.time){
                    ## get.time.row finds the row in the file.
-                   n <- .get.time.row(object@file, .to.ms(n),
+                   n <- .get.time.row(object@file, .to.ms(hms),
                                       object@file.index)
                    n <- n - object@file.index
                    invisible(read.orders(object, n))
                } else {
-                   n <- .get.time.row(object@file, .to.ms(n))
+                   n <- .get.time.row(object@file, .to.ms(hms))
                    object <- reset(object)
                    invisible(read.orders(object, n))
                }
@@ -451,7 +455,7 @@ setMethod("copy",
           signature(x = "orderbook"),
           function(x){
               if(length(x@ob.data) > 0)
-                  x@ob.data <- copy(x@ob.data)
+                  x@ob.data <- hash:::copy(x@ob.data)
               else
                   x@ob.data <- hash()
               invisible(x)

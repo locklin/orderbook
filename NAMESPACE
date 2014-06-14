@@ -1,7 +1,7 @@
 importFrom("graphics", plot)
 importFrom("hash", "copy")
 
-export("orderbook" )
+export("orderbook")
 
 exportClasses("orderbook")
 

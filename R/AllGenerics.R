@@ -27,6 +27,8 @@ setClass("orderbook", representation(current.ob   = "data.frame",
                                      feed.index   = "numeric",
                                      ob.data      = "hash",
                                      trade.data   = "vector",
+                                     ticker = "character",
+                                     exchange = "character",
                                      type       = "character"
                                      ))
 
@@ -104,7 +106,7 @@ if(!isGeneric("read.orders"))
 
 
 if(!isGeneric("read.time"))
-    setGeneric("read.time", function(object, n)
+    setGeneric("read.time", function(object, hms)
                standardGeneric("read.time"))
 
 

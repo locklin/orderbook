@@ -1,6 +1,6 @@
 library(orderbook)
 
-filename <- system.file("extdata", "sample.txt",
+filename <- system.file("extdata", "testTP.csv",
                         package = "orderbook")
 
 ob <- orderbook(file = filename)

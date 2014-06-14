@@ -53,9 +53,8 @@ txsub <- function(x,y) {
 ## Creates a new current.ob from ob.data. Takes in the object, returns
 ## the object with an updated current.ob.
 
-.update <- function(ob)
-{
-    x <- copy(ob@ob.data)
+.update <- function(ob){
+    x <- hash:::copy(ob@ob.data)
     skip = 5
     ## Turn hash into a list. Unlist into a vector. Remove
     ## names. Vector is currently id,time,type,size,price repeated
@@ -81,36 +80,37 @@ txsub <- function(x,y) {
 
 ## Returns the row number of the first order after the specified time.
 
-.get.time.row <- function(file, n, skip = 1){
+.get.time.row <- function(fn, n, skip = 1){
     ## Open the file connection
-    file <- file(file, open="r")
+    fh <- file(fn, open="r")
     ## Skip to wherever the other function told it to skip to in the
     ## data file.
-    x <- scan(file, nlines = 1, sep = ",", what = "character",
+    x <- scan(fh, nlines = 1, sep = ",", what = "character",
               quiet = TRUE, skip = skip)
     ## Increment because now we are at the first line after skip.
     i <- skip + 1
     ## As long as there are still entries, and we haven't found a time
     ## greater than the time we are looking for, keep going.
     while(!identical(length(x), 0) && as.numeric(x[2]) <= n){
-        x <- scan(file, nlines = 1, sep = ",", what = "character",
+        x <- scan(fh, nlines = 1, sep = ",", what = "character",
                   quiet = TRUE)
+
         i <- i + 1
     }
-    close(file)
+    close(fh)
     return(i)
 }
 
 ## Returns the time of a row number
 ## this doesn't seem to be called anywhere -SCL
-.get.row.time <- function(file, n){
+.get.row.time <- function(fn, n){
     ## Open the file connection
-    file <- file(file, open="r")
+    fh <- file(fn, open="r")
     ## Skip to 1 before the row in question, then read the line
-    x <- scan(file, nlines = 1, sep = ",", what = "character",
+    x <- scan(fh, nlines = 1, sep = ",", what = "character",
               quiet = TRUE, skip = n - 1)
     ## Close the connection
-    close(file)
+    close(fh)
     ## Return the time
     return(as.numeric(x[2]))
 }
@@ -119,17 +119,17 @@ txsub <- function(x,y) {
 ## time. Pretty much the same as the above function, except we look
 ## for "T".
 ## this will need some kind of fixing -gets called in next.trade method -SCL
-.get.next.trade <- function(file, n){
-    file <- file(file, open="r")
-    x <- scan(file, nlines = 1, sep = ",", what = "character",
+.get.next.trade <- function(fn, n){
+    fh <- file(fn, open="r")
+    x <- scan(fh, nlines = 1, sep = ",", what = "character",
               quiet = TRUE, skip = n)
     n <- n + 1
     while(!identical(length(x), 0) & !isTRUE(x[1] %in% "T")){
-        x <- scan(file, nlines = 1, sep = ",", what = "character",
+        x <- scan(fh, nlines = 1, sep = ",", what = "character",
                   quiet = TRUE)
        	n <- n + 1
     }
-    close(file)
+    close(fh)
     return(n)
 }
 
@@ -141,17 +141,17 @@ txsub <- function(x,y) {
 ## trade.data, my.trades, file.index, and current.time.
 ## keeping around for history sake.
 .read.orders <- function(object, n){
-    ob <- copy(object)
+    ob <- hash:::copy(object)
     ## Pull out current values
-    file <- ob@file
+    fn <- ob@file
     file.index <- ob@file.index
     ob.data <- ob@ob.data
     trade.data <- ob@trade.data
     max = 6
     ## Open file connection. Skip to the current place in the file and
     ## read in the first line after that.
-    file <- file(file, open = "r")
-    x <- scan(file, nlines = 1, sep = ",", what = "character", quiet =
+    fh <- file(fn, open = "r")
+    x <- scan(fh, nlines = 1, sep = ",", what = "character", quiet =
               TRUE, skip = file.index)
     ## While there are still lines to read and less than n lines have
     ## been read.
@@ -222,11 +222,11 @@ txsub <- function(x,y) {
         ## Increase i
         i <- i + 1
         ## Read in the next line.
-        x <- scan(file, nlines = 1, sep = ",", what = "character",
+        x <- scan(fh, nlines = 1, sep = ",", what = "character",
                   quiet = TRUE)
     } ## end while
     
-    close(file)
+    close(fh)
     ob@ob.data <- ob.data
     ob@file.index <- file.index + i
     ob@trade.data <- trade.data
@@ -266,7 +266,7 @@ txsub <- function(x,y) {
 
 .midpoint.returns <- function(object, trdprice, trdrow, time){
     ## Now the orderbook is at the start order
-    tmp.ob <- copy(object)
+    tmp.ob <- hash:::copy(object)
     tmp.ob <- read.orders(tmp.ob, trdrow - tmp.ob@file.index)
     ## Create a vector with the current time of the orderbook at that
     ## order number added to the times in the vector
@@ -299,16 +299,16 @@ kane.tl <- function(x) {
 ## read. Returns an object with updated ob.data, current.ob,
 ## trade.data, my.trades, file.index, and current.time.
 .read.orders.tp <- function(object, n){
-    ob <- copy(object)
+    ob <- hash:::copy(object)
     ## Pull out current values
-    file <- ob@file
+    fn <- ob@file
     file.index <- ob@file.index
     ob.data <- ob@ob.data
     trade.data <- ob@trade.data
     ## Open file connection. Skip to the current place in the file and
     ## read in the first line after that.
-    file <- file(file, open = "r")
-    x <- scan(file, nlines = 1, sep = ",", what = "character", quiet =
+    fh <- file(fn, open = "r")
+    x <- scan(fh, nlines = 1, sep = ",", what = "character", quiet =
               TRUE, skip = file.index)
     ## While there are still lines to read and less than n lines have
     ## been read.
@@ -377,11 +377,11 @@ kane.tl <- function(x) {
         ## Increase i
         i <- i + 1
         ## Read in the next line.
-        x <- scan(file, nlines = 1, sep = ",", what = "character",
+        x <- scan(fh, nlines = 1, sep = ",", what = "character",
                   quiet = TRUE)
     } ## end while
     
-    close(file)
+    close(fh)
     ob@ob.data <- ob.data
     ob@file.index <- file.index + i
     ob@trade.data <- trade.data
@@ -390,3 +390,5 @@ kane.tl <- function(x) {
     ob = .update(ob)
     invisible(ob)
 }
+
+

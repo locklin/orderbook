@@ -21,30 +21,23 @@
 ## Returns an orderbook object. For input it takes a data frame, and names for
 ## price, size, type, time, id, as well as what ASK and BID are denoted as.
 
-orderbook <- function(file  = NULL)
-{
+orderbook <- function(filen  = NULL){
         ## Create an empty current order book data frame
         current.ob <- data.frame(price = numeric(0), size =
                                  numeric(0), type = character(0), time
                                  = numeric(0), id = character(0))
         ## Check to see that the file is valid and can be opened
-        obfile <- file(file, open = "r")
+        obfile <- file(filen, open = "r")
         stopifnot(isOpen(obfile, "r"))
         ## Read header file
-        x <- scan(file, nlines = 1, sep = ",", what = "character", quiet = TRUE)
-
+        x <- scan(obfile, nlines = 1, sep = ",", what = "character", quiet = TRUE)
+        ## Read first line for the tickerID
+        xx <- scan(obfile, nlines = 1, sep = ",", what = "character", quiet = TRUE)
         ## Close file
 
         close(obfile)
 
-        if(x[1]=="type") {
-          ## old format; keeping around for historical reasons
-          stopifnot(identical(x[1], "type"), identical(x[2], "time"),
-                    identical(x[3], "id"), identical(x[4], "price"),
-                    identical(x[5], "size"), identical(x[6], "type"))
-          mytype="standard"
-        }
-
+        ## required TradingPhysics fields
         if(x[1]=="Time") {
           stopifnot(identical(x[1], "Time"), identical(x[2], "Ticker"),
                     identical(x[3], "Order"), identical(x[4], "T"),
@@ -57,9 +50,11 @@ orderbook <- function(file  = NULL)
         ## Return a new order book object.
         invisible(new("orderbook",
                       current.ob   = current.ob,
-                      file         = file,
+                      file         = filen,
                       trade.data = td.data,
+                      ticker = xx[2],
                       type       = mytype
+                      
                       ))
 }
 

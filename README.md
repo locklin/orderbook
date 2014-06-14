@@ -16,9 +16,16 @@ Since ITCH style files includes things like partial cancels and crosses, I added
 This is to make sense of the CSV data provided by tradingphysics.com (TP), 
 which I believe is extremely close to native ITCH 4.0 format.
 
+Thanks to Artem at tradingphysics.com for the sample data file.
 
 TODO: really simple order book: same thing without order-id/time priority
-TODO: need a test case to do the regression to past results
-TODO: need a test data set using the new fields (check with Art if that's OK)
-TODO: fix the 2 warnings and 3 notes in R CMD check 
+TODO vacuum in the whole OB file as a data.table [0%] 
+    - [ ] remove references to kane.tl in the read.orders.tp thing 
+    - [ ] alternate to .read.orders.tp 
+    - [ ] alternate to .get.time.row (presently broken anyway)
+    - [ ] alternate to .get.next.trade (presently broken anyway)
+    - [ ] remove .read.orders
+    - [ ] WTF does midpoint.returns do? It doesn't do anything good yet
+    - [ ] to.ms and to.time as exported methods for ms values
+
 
